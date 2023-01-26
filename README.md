@@ -1,2 +1,3 @@
-# nightgolem-boogaloo
-night golem v2.5
+# Netherite golem
+
+or... an updated [WIP] version :)
