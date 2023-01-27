@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@slack/bolt": "^3.12.2",
+    "airtable": "^0.11.6",
     "dotenv": "^16.0.3"
   },
   "prettier": "@sapphire/prettier-config"
