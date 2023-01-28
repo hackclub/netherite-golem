@@ -21,8 +21,8 @@ Airtable.configure({
 const hackNightBase = Airtable.base('appD7LebR9JUA36H2');
 const timeRegex = /(?<hour>\d{2}):(?<min>\d{2})/;
 
-// Listens to incoming messages that contain "hello"
-app.message('when are hack nights?', async ({ message, say }) => {
+// schedule handler
+app.message('when are hack nights?', async ({ say }) => {
 	const scheduleData = (await getAllRecords(hackNightBase.table('Schedule'))).map((e) => {
 		const timeRes = timeRegex.exec(e.fields['Time Start']);
 		if (!timeRes) throw `Couldn't parse time!`;
@@ -49,6 +49,23 @@ Hey! Right now, Hack Nights run as follows:
 ${schedule.join('\n')}
 
 Do none of these timeslots sue you? Grab a friend (or three) and suggest a new time in #hack-night!`
+				}
+			}
+		]
+	});
+});
+
+app.message('what are hack nights?', async ({ say }) => {
+	await say({
+		blocks: [
+			{
+				type: 'section',
+				text: {
+					type: 'mrkdwn',
+					text: `
+{insert copy to be made}
+*How do I join?*
+Check the schedule (ask me \`when are hack nights?\`) and be on the lookout for a message in #hack-night when the call is about to start! If you want to participate in unscheduled Hack Nights, you can also join the Hack Night Regulars group :)`
 				}
 			}
 		]
