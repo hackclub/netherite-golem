@@ -6,6 +6,7 @@ dotenv.config();
 import { App, LogLevel } from '@slack/bolt';
 import * as Airtable from 'airtable';
 import { getAllRecords } from './utils/airtable.js';
+import { dow } from './utils/time.js';
 
 const app = new App({
 	token: process.env.SLACK_BOT_TOKEN,
@@ -22,7 +23,7 @@ const hackNightBase = Airtable.base('appD7LebR9JUA36H2');
 const timeRegex = /(?<hour>\d{2}):(?<min>\d{2})/;
 
 // schedule handler
-app.message('when are hack nights?', async ({ say }) => {
+app.message('when are hack nights', async ({ say }) => {
 	const scheduleData = (await getAllRecords(hackNightBase.table('Schedule'))).map((e) => {
 		const timeRes = timeRegex.exec(e.fields['Time Start']);
 		if (!timeRes) throw new Error(`Couldn't parse time!`);
@@ -55,7 +56,8 @@ Do none of these timeslots sue you? Grab a friend (or three) and suggest a new t
 	});
 });
 
-app.message('what are hack nights?', async ({ say }) => {
+// explanation handler
+app.message('what are hack nights', async ({ say }) => {
 	await say({
 		blocks: [
 			{
@@ -70,6 +72,33 @@ Check the schedule (ask me \`when are hack nights?\`) and be on the lookout for 
 			}
 		]
 	});
+});
+
+// next hack night handler
+app.message('next hack night', async ({ say }) => {
+	const rightNow = new Date();
+	const scheduleData = (await getAllRecords(hackNightBase.table('Schedule'))).map((e) => {
+		const timeRes = timeRegex.exec(e.fields['Time Start']);
+		if (!timeRes) throw new Error(`Couldn't parse time!`);
+		const startTime = new Date(2023, 1, 1, parseInt(timeRes.groups!.hour, 10) ?? 2, parseInt(timeRes.groups!.min, 10) ?? 2).getTime();
+
+		return {
+			title: e.fields['Title'] as string,
+			days: e.fields['Day'].map((input: string) => dow.findIndex((e) => e === input)) as number[],
+			startTime: startTime as number
+		};
+	});
+
+	// check if there's a hack night _today_
+	const todayHn = scheduleData.filter((e) => e.days.includes(rightNow.getDay()));
+	if (todayHn.length > 1) {
+		// time is calculated as an offset from 2023/01/01 00:00 UTC so we can filter & sort by timestamps
+		// TODO: How do we determine duration of hack nights? are they 6/7/8 hours?
+		const next = todayHn.filter((e) => e.startTime > rightNow.getTime()).sort((a, b) => a.startTime - b.startTime)[0];
+		await say(`Next Hack Night: ${next.title} at ${next.startTime}`);
+	} else {
+		// TODO: Make this one
+	}
 });
 
 void (async () => {

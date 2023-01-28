@@ -1,8 +1,12 @@
 import type { Record as AirtableRecord, Records, Table } from 'airtable';
-export function getAllRecords(table: Table<Record<string, string>>): Promise<Array<AirtableRecord<Record<any, any>>>> {
+import type { QueryParams } from 'airtable/lib/query_params';
+export function getAllRecords(
+	table: Table<Record<string, string>>,
+	options?: QueryParams<Record<string, string>>
+): Promise<Array<AirtableRecord<Record<any, any>>>> {
 	return new Promise((res, rej) => {
 		const total: Records<Record<string, string>>[] = [];
-		table.select().eachPage(
+		table.select(options).eachPage(
 			(records, fetchNextPage) => {
 				// This function (`page`) will get called for each page of records.
 
