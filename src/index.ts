@@ -25,8 +25,8 @@ const timeRegex = /(?<hour>\d{2}):(?<min>\d{2})/;
 app.message('when are hack nights?', async ({ say }) => {
 	const scheduleData = (await getAllRecords(hackNightBase.table('Schedule'))).map((e) => {
 		const timeRes = timeRegex.exec(e.fields['Time Start']);
-		if (!timeRes) throw `Couldn't parse time!`;
-		const startTime = new Date(2023, 1, 1, parseInt(timeRes.groups!.hour) ?? 2, parseInt(timeRes.groups!.min) ?? 2).getTime();
+		if (!timeRes) throw new Error(`Couldn't parse time!`);
+		const startTime = new Date(2023, 1, 1, parseInt(timeRes.groups!.hour, 10) ?? 2, parseInt(timeRes.groups!.min, 10) ?? 2).getTime();
 
 		return {
 			title: e.fields['Title'],
@@ -72,7 +72,7 @@ Check the schedule (ask me \`when are hack nights?\`) and be on the lookout for 
 	});
 });
 
-(async () => {
+void (async () => {
 	// Start your app
 	await app.start(Number(process.env.PORT) || 3000);
 
