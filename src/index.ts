@@ -5,8 +5,8 @@ dotenv.config();
 
 import { App, LogLevel } from '@slack/bolt';
 import * as Airtable from 'airtable';
-import { getAllRecords } from './utils/airtable.js';
-import { dow } from './utils/time.js';
+import { getAllRecords } from './utils/airtable';
+import { dow } from './utils/time';
 
 const app = new App({
 	token: process.env.SLACK_BOT_TOKEN,
@@ -19,26 +19,24 @@ const app = new App({
 Airtable.configure({
 	apiKey: process.env.AIRTABLE_KEY
 });
-const hackNightBase = Airtable.base('appD7LebR9JUA36H2');
+const hackNightBase = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 const timeRegex = /(?<hour>\d{2}):(?<min>\d{2})/;
 
 // schedule handler
 app.message('when are hack nights', async ({ say }) => {
-	const scheduleData = (await getAllRecords(hackNightBase.table('Schedule'))).map((e) => {
+	const scheduleData = (await getAllRecords(hackNightBase.table(process.env.AIRTABLE_SCHEDULE_TABLE_ID!))).map((e) => {
 		const timeRes = timeRegex.exec(e.fields['Time Start']);
 		if (!timeRes) throw new Error(`Couldn't parse time!`);
 		const startTime = new Date(2023, 1, 1, parseInt(timeRes.groups!.hour, 10) ?? 2, parseInt(timeRes.groups!.min, 10) ?? 2).getTime();
 
 		return {
 			title: e.fields['Title'],
-			days: e.fields['Day'] as unknown as string[],
+			day: e.fields['Day'] as unknown as string,
 			startTimestamp: startTime / 1000,
 			startTimeText: e.fields['Time Start']
 		};
 	});
-	const schedule = scheduleData.map(
-		(e) => `* *${e.title}*, every ${e.days.join(' and ')} at <!date^${e.startTimestamp}^{time}|${e.startTimeText} UTC>`
-	);
+	const schedule = scheduleData.map((e) => `* *${e.title}*, every ${e.day} at <!date^${e.startTimestamp}^{time}|${e.startTimeText} UTC>`);
 	await say({
 		blocks: [
 			{
@@ -77,7 +75,7 @@ Check the schedule (ask me \`when are hack nights?\`) and be on the lookout for 
 // next hack night handler
 app.message('next hack night', async ({ say }) => {
 	const rightNow = new Date();
-	const scheduleData = (await getAllRecords(hackNightBase.table('Schedule'))).map((e) => {
+	const scheduleData = (await getAllRecords(hackNightBase.table(process.env.AIRTABLE_SCHEDULE_TABLE_ID!))).map((e) => {
 		const timeRes = timeRegex.exec(e.fields['Time Start']);
 		if (!timeRes) throw new Error(`Couldn't parse time!`);
 		const startTime = new Date(2023, 1, 1, parseInt(timeRes.groups!.hour, 10) ?? 2, parseInt(timeRes.groups!.min, 10) ?? 2).getTime();
